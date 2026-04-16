@@ -1,8 +1,10 @@
-# Recipe Monorepo
+# Bourdain
 
 A multi-interface recipe application with CLI, TUI, and web components.
 
 ## Project Structure
+
+Monorepo
 
 ```
 .
@@ -55,6 +57,9 @@ SELECT cuisine, COUNT(*) FROM recipes GROUP BY cuisine;
 ## CLI (`cli/`)
 
 Command-line interface for recipe management. Built with Commander.js and Clack for interactive prompts.
+
+<img width="572" height="626" alt="image" src="https://github.com/user-attachments/assets/4679aaef-b2c8-456f-bd1c-9eb95ba360a7" />
+
 
 ### Installation
 
@@ -176,6 +181,9 @@ pnpm build && node dist/index.js --help
 ```
 
 ## TUI (`tui/`)
+
+<img width="1083" height="717" alt="image" src="https://github.com/user-attachments/assets/47efc8f0-2bbd-4913-86c3-a103b0d2746c" />
+
 
 Terminal user interface for interactive recipe analytics dashboard. Built with Ink (React for terminals) featuring bar charts and data tables.
 
