@@ -5,9 +5,36 @@ import { dirname, join, resolve } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Path to the database file (relative to monorepo root)
-// From dist/lib/db.js, we need to go up to the monorepo root
-const DB_PATH = resolve(__dirname, '../../db/recipes.db');
+// Path to the database file
+// Try multiple locations to support different run contexts (CLI, tests, etc.)
+function findDbPath(): string {
+  const possiblePaths = [
+    // From dist/lib/db.js in CLI package
+    resolve(__dirname, '../../db/recipes.db'),
+    // From src/lib/db.ts during tests
+    resolve(__dirname, '../../../db/recipes.db'),
+    // From project root
+    resolve(process.cwd(), 'db/recipes.db'),
+    // Absolute fallback
+    '/Users/dthyresson/projects/experiments/recipe-1/db/recipes.db',
+  ];
+  
+  for (const path of possiblePaths) {
+    try {
+      const fs = require('fs');
+      if (fs.existsSync(path)) {
+        return path;
+      }
+    } catch {
+      // Continue to next path
+    }
+  }
+  
+  // Default to the most likely path
+  return possiblePaths[0];
+}
+
+const DB_PATH = findDbPath();
 
 export function allAsync<T>(sql: string, params: (string | number)[] = []): Promise<T[]> {
   const db = new sqlite3.Database(DB_PATH);

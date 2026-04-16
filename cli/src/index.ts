@@ -38,6 +38,7 @@ program
   .option('-s, --sort <type>', 'Sort by: alpha, time, or spice', 'alpha')
   .option('-c, --cuisine <cuisine>', 'Filter by cuisine')
   .option('-i, --ingredients <ingredients>', 'Filter by ingredients (comma-separated)')
+  .option('--match <mode>', 'Ingredient match mode: all (AND) or any (OR)', 'all')
   .option('--no-interactive', 'Skip interactive prompts and use only CLI options')
   .action(async (options) => {
     const opts: {
@@ -66,6 +67,10 @@ program
 
     if (options.ingredients) {
       opts.ingredients = options.ingredients.split(',').map((i: string) => i.trim().toLowerCase());
+    }
+
+    if (options.match && ['all', 'any'].includes(options.match)) {
+      opts.ingredientMatch = options.match;
     }
 
     await listCommand(opts);

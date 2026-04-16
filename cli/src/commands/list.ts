@@ -3,7 +3,7 @@ import pc from 'picocolors';
 import { 
   listRecipes, 
   getCuisines, 
-  getIngredients, 
+  getIngredients,
   getRecipeIngredients,
   type SortOption 
 } from '../lib/recipes.js';
@@ -14,6 +14,7 @@ interface ListOptions {
   sort?: SortOption;
   cuisine?: string;
   ingredients?: string[];
+  ingredientMatch?: 'all' | 'any';
 }
 
 export async function listCommand(options: ListOptions = {}) {
@@ -21,6 +22,7 @@ export async function listCommand(options: ListOptions = {}) {
     let sort: SortOption = options.sort || 'alpha';
     let cuisine: string | undefined = options.cuisine;
     let ingredients: string[] | undefined = options.ingredients;
+    let ingredientMatch: 'all' | 'any' = options.ingredientMatch || 'all';
 
     // Interactive mode
     if (options.interactive !== false) {
@@ -63,25 +65,70 @@ export async function listCommand(options: ListOptions = {}) {
         cuisine = cuisineChoice as string;
       }
 
-      // Filter by ingredients
+      // Filter by ingredients (multiselect with initial search)
       const availableIngredients = await getIngredients();
-      const ingredientChoices = await p.multiselect({
-        message: 'Filter by ingredients (optional - recipes must contain ALL selected):',
-        options: availableIngredients.map(i => ({ 
-          value: i, 
-          label: i.charAt(0).toUpperCase() + i.slice(1) 
-        })),
+      
+      // First, let user search to narrow down
+      const searchTerm = await p.text({
+        message: 'Search ingredients to filter list (optional):',
+        placeholder: 'e.g., "chicken" or leave empty for all',
         required: false,
       });
 
-      if (p.isCancel(ingredientChoices)) {
+      if (p.isCancel(searchTerm)) {
         p.outro(pc.yellow('Cancelled'));
         closeDb();
         return;
       }
 
-      if (Array.isArray(ingredientChoices) && ingredientChoices.length > 0) {
-        ingredients = ingredientChoices as string[];
+      const term = (searchTerm || '').toLowerCase().trim();
+      const filteredIngredients = term 
+        ? availableIngredients.filter(i => i.includes(term))
+        : availableIngredients;
+
+      if (filteredIngredients.length === 0) {
+        p.note('No ingredients match your search', 'No matches');
+      } else {
+        // Use multiselect on the filtered (or full) list
+        const ingredientChoices = await p.multiselect({
+          message: term 
+            ? `Select from ${filteredIngredients.length} matches for "${term}"` 
+            : `Select ingredients (${availableIngredients.length} total):`,
+          options: filteredIngredients.map(i => ({ 
+            value: i, 
+            label: i.charAt(0).toUpperCase() + i.slice(1) 
+          })),
+          required: false,
+        });
+
+        if (p.isCancel(ingredientChoices)) {
+          p.outro(pc.yellow('Cancelled'));
+          closeDb();
+          return;
+        }
+
+        if (Array.isArray(ingredientChoices) && ingredientChoices.length > 0) {
+          ingredients = ingredientChoices as string[];
+          
+          // Ask for match mode if multiple ingredients selected
+          if (ingredients.length > 1) {
+            const matchMode = await p.select({
+              message: 'Match mode for ingredients:',
+              options: [
+                { value: 'all', label: 'ALL ingredients must be present (AND)' },
+                { value: 'any', label: 'ANY ingredient can be present (OR)' },
+              ],
+            });
+
+            if (p.isCancel(matchMode)) {
+              p.outro(pc.yellow('Cancelled'));
+              closeDb();
+              return;
+            }
+
+            ingredientMatch = matchMode as 'all' | 'any';
+          }
+        }
       }
     }
 
@@ -89,7 +136,12 @@ export async function listCommand(options: ListOptions = {}) {
     const { default: ora } = await import('ora');
     const spinner = ora({ text: 'Fetching recipes...', color: 'cyan' }).start();
     
-    const recipes = await listRecipes({ sort, cuisine, ingredients });
+    const recipes = await listRecipes({ 
+      sort, 
+      cuisine, 
+      ingredients, 
+      ingredientMatch 
+    });
     
     spinner.stop();
 
@@ -104,18 +156,19 @@ export async function listCommand(options: ListOptions = {}) {
     console.log(pc.dim('─'.repeat(60)));
 
     for (const recipe of recipes) {
-      console.log('\n' + pc.bold(pc.white(recipe.title)));
-      console.log(pc.dim(`  Cuisine: ${recipe.cuisine} | Meal: ${recipe.meal_type} | Effort: ${recipe.effort}`));
-      console.log(pc.dim(`  Time: ${recipe.estimated_time_minutes} min | Spice: ${'🌶️'.repeat(recipe.spice_level)}${'○'.repeat(3 - recipe.spice_level)}`));
+      console.log('\n' + pc.bold(pc.cyan(recipe.title)));
+      console.log(`  ${pc.green('Cuisine:')} ${recipe.cuisine}  ${pc.green('Meal:')} ${recipe.meal_type}  ${pc.green('Effort:')} ${recipe.effort}`);
+      const spiceDisplay = recipe.spice_level > 0 ? `  ${pc.green('Spice:')} ${'🌶️'.repeat(recipe.spice_level)}${'○'.repeat(3 - recipe.spice_level)}` : '';
+      console.log(`  ${pc.magenta('Time:')} ${pc.bold(String(recipe.estimated_time_minutes))} min${spiceDisplay}`);
       
       if (recipe.notes) {
-        console.log(pc.dim(`  Notes: ${recipe.notes}`));
+        console.log(`  ${pc.yellow('Notes:')} ${recipe.notes}`);
       }
 
       // Get ingredients for this recipe
       const recipeIngredients = await getRecipeIngredients(recipe.id);
       if (recipeIngredients.length > 0) {
-        console.log(pc.dim(`  Ingredients: ${recipeIngredients.slice(0, 8).join(', ')}${recipeIngredients.length > 8 ? '...' : ''}`));
+        console.log(`  ${pc.blue('Ingredients:')} ${recipeIngredients.slice(0, 8).join(', ')}${recipeIngredients.length > 8 ? '...' : ''}`);
       }
     }
 

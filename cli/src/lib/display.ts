@@ -24,11 +24,17 @@ export function displayRecipe(details: RecipeDetails): void {
   console.log(pc.dim(`Meal Type: ${recipe.meal_type.charAt(0).toUpperCase() + recipe.meal_type.slice(1)}`));
   console.log(pc.dim(`Effort: ${recipe.effort.charAt(0).toUpperCase() + recipe.effort.slice(1)}`));
   console.log(pc.dim(`Time: ${recipe.estimated_time_minutes} minutes`));
-  console.log(pc.dim(`Spice Level: ${'🌶️'.repeat(recipe.spice_level)}${'○'.repeat(3 - recipe.spice_level)}`));
+  if (recipe.spice_level > 0) {
+    console.log(pc.dim(`Spice Level: ${'🌶️'.repeat(recipe.spice_level)}${'○'.repeat(3 - recipe.spice_level)}`));
+  }
 
   // Descriptors
   if (descriptors.length > 0) {
-    console.log(pc.dim(`Descriptors: ${descriptors.map(d => d.charAt(0).toUpperCase() + d.slice(1)).join(', ')}`));
+    const formattedDescriptors = descriptors.map(d => {
+      const formatted = d.charAt(0).toUpperCase() + d.slice(1);
+      return d === 'spicy' ? `${formatted} 🌶️` : formatted;
+    });
+    console.log(pc.dim(`Descriptors: ${formattedDescriptors.join(', ')}`));
   }
 
   // Tags

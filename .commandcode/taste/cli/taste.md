@@ -1,9 +1,12 @@
 # Cli
+- Use chili emoji (🌶️) for "spicy" outputs in CLI. Confidence: 0.85
+- Ensure ASCII art banners accurately represent the intended letters (e.g., "B" should not look like "R"). Confidence: 0.85
 - Use terminui for building terminal UIs in CommandCode projects. Confidence: 0.65
 - Use pnpm as the package manager for CLI projects. Confidence: 1.00
 - Use TypeScript for CLI projects. Confidence: 0.95
 - Use tsup as the build tool for CLI projects. Confidence: 0.95
 - Use vitest for testing CLI projects. Confidence: 0.95
+- Always write tests to prevent regressions. Confidence: 0.85
 - Use Commander.js for CLI command handling. Confidence: 0.95
 - Use clack for interactive user input in CLI projects. Confidence: 0.95
 - Check for existing CLI name conflicts before running npm link. Confidence: 0.95
@@ -24,3 +27,7 @@
 - Use minimal white, gray, and black colors for ASCII art banners. Confidence: 0.85
 - Check if package is publishable using `npx can-i-publish` before building or publishing. Confidence: 0.85
 - Always build and run typecheck after making code changes. Confidence: 0.85
+- Choose pleasant, readable contrast colors for both light and dark mode terminals. Confidence: 0.85
+- Avoid using checklists (multiselect) for large lists (100+ items) in CLI; use alternative UI patterns. Confidence: 0.70
+- For selecting from 100+ items in clack, use text input with fuzzy search rather than select-based patterns. Confidence: 0.75
+

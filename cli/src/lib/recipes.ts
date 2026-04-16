@@ -6,6 +6,7 @@ export interface ListRecipesOptions {
   sort?: SortOption;
   cuisine?: string;
   ingredients?: string[];
+  ingredientMatch?: 'all' | 'any';
 }
 
 export async function getCuisines(): Promise<string[]> {
@@ -37,14 +38,28 @@ export async function listRecipes(options: ListRecipesOptions = {}): Promise<Rec
   // Filter by ingredients
   if (options.ingredients && options.ingredients.length > 0) {
     const placeholders = options.ingredients.map(() => '?').join(',');
-    const ingredientFilter = `id IN (
-      SELECT DISTINCT ri.recipe_id 
-      FROM recipe_ingredients ri
-      JOIN ingredients i ON ri.ingredient_id = i.id
-      WHERE i.name IN (${placeholders})
-      GROUP BY ri.recipe_id
-      HAVING COUNT(DISTINCT i.name) = ${options.ingredients.length}
-    )`;
+    const matchMode = options.ingredientMatch || 'all';
+    
+    let ingredientFilter: string;
+    if (matchMode === 'all') {
+      // AND mode: recipe must have ALL selected ingredients
+      ingredientFilter = `id IN (
+        SELECT DISTINCT ri.recipe_id 
+        FROM recipe_ingredients ri
+        JOIN ingredients i ON ri.ingredient_id = i.id
+        WHERE i.name IN (${placeholders})
+        GROUP BY ri.recipe_id
+        HAVING COUNT(DISTINCT i.name) = ${options.ingredients.length}
+      )`;
+    } else {
+      // OR mode: recipe must have ANY of the selected ingredients
+      ingredientFilter = `id IN (
+        SELECT DISTINCT ri.recipe_id 
+        FROM recipe_ingredients ri
+        JOIN ingredients i ON ri.ingredient_id = i.id
+        WHERE i.name IN (${placeholders})
+      )`;
+    }
     
     if (whereConditions.length > 0) {
       sql += ' WHERE ' + whereConditions.join(' AND ') + ' AND ' + ingredientFilter;
