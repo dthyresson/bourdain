@@ -50,7 +50,7 @@ Use `scripts/init_schema.sql` to create the schema if the database is missing.
 
 When generating SQL for inserts:
 - use `INSERT OR IGNORE` for `recipes`, `ingredients`, `tags`, and `descriptors`
-- treat duplicates by the unique key `title + cuisine`
+- treat duplicates by the unique key `title` for recipes and `name` for ingredients
 - insert recipe links with subqueries that look up IDs from names
 - wrap the generated SQL file in `BEGIN;` and `COMMIT;`
 - escape single quotes correctly in SQL string literals

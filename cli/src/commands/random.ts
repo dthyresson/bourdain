@@ -1,6 +1,7 @@
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
-import { getCuisines, getMealTypes, getRecipeIngredients, getRecipeSteps, getRandomRecipe } from '../lib/recipes.js';
+import { getCuisines, getMealTypes, getRecipeIngredients, getRecipeSteps, getRandomRecipe, getRecipeTags, getRecipeDescriptors } from '../lib/recipes.js';
+import { displayRecipe } from '../lib/display.js';
 import { closeDb } from '../lib/db.js';
 
 interface RandomOptions {
@@ -74,50 +75,16 @@ export async function randomCommand(options: RandomOptions = {}) {
     }
 
     // Get full recipe details
-    const [ingredients, steps] = await Promise.all([
+    const [ingredients, steps, tags, descriptors] = await Promise.all([
       getRecipeIngredients(recipe.id),
       getRecipeSteps(recipe.id),
+      getRecipeTags(recipe.id),
+      getRecipeDescriptors(recipe.id),
     ]);
 
-    // Display recipe
-    console.log('\n' + pc.bold(pc.cyan('━'.repeat(60))));
-    console.log(pc.bold(pc.white(recipe.title)));
-    console.log(pc.dim('━'.repeat(60)));
+    // Display recipe using the shared display function
+    displayRecipe({ recipe, ingredients, steps, tags, descriptors });
 
-    // Recipe metadata
-    console.log(pc.dim(`Cuisine: ${recipe.cuisine.charAt(0).toUpperCase() + recipe.cuisine.slice(1)}`));
-    console.log(pc.dim(`Meal Type: ${recipe.meal_type.charAt(0).toUpperCase() + recipe.meal_type.slice(1)}`));
-    console.log(pc.dim(`Effort: ${recipe.effort.charAt(0).toUpperCase() + recipe.effort.slice(1)}`));
-    console.log(pc.dim(`Time: ${recipe.estimated_time_minutes} minutes`));
-    console.log(pc.dim(`Spice Level: ${'🌶️'.repeat(recipe.spice_level)}${'○'.repeat(3 - recipe.spice_level)}`));
-
-    if (recipe.notes) {
-      console.log(pc.dim(`Notes: ${recipe.notes}`));
-    }
-
-    // Ingredients
-    console.log('\n' + pc.bold(pc.cyan('Ingredients')));
-    console.log(pc.dim('─'.repeat(40)));
-    if (ingredients.length > 0) {
-      ingredients.forEach((ingredient, index) => {
-        console.log(pc.white(`  ${index + 1}. ${ingredient.charAt(0).toUpperCase() + ingredient.slice(1)}`));
-      });
-    } else {
-      console.log(pc.dim('  No ingredients listed'));
-    }
-
-    // Cooking Steps
-    console.log('\n' + pc.bold(pc.cyan('Cooking Steps')));
-    console.log(pc.dim('─'.repeat(40)));
-    if (steps.length > 0) {
-      steps.forEach((step, index) => {
-        console.log(pc.white(`  ${index + 1}. ${step}`));
-      });
-    } else {
-      console.log(pc.dim('  No cooking steps listed'));
-    }
-
-    console.log('\n' + pc.dim('━'.repeat(60)));
     p.outro(pc.green('✓ Enjoy your recipe!'));
 
   } catch (error) {

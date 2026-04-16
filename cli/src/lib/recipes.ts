@@ -94,6 +94,28 @@ export async function getRecipeSteps(recipeId: number): Promise<string[]> {
   return rows.map(r => r.instruction);
 }
 
+export async function getRecipeTags(recipeId: number): Promise<string[]> {
+  const rows = await allAsync<{ name: string }>(`
+    SELECT t.name 
+    FROM tags t
+    JOIN recipe_tags rt ON t.id = rt.tag_id
+    WHERE rt.recipe_id = ?
+    ORDER BY t.name
+  `, [recipeId]);
+  return rows.map(r => r.name);
+}
+
+export async function getRecipeDescriptors(recipeId: number): Promise<string[]> {
+  const rows = await allAsync<{ name: string }>(`
+    SELECT d.name 
+    FROM descriptors d
+    JOIN recipe_descriptors rd ON d.id = rd.descriptor_id
+    WHERE rd.recipe_id = ?
+    ORDER BY d.name
+  `, [recipeId]);
+  return rows.map(r => r.name);
+}
+
 export interface RandomRecipeOptions {
   cuisine?: string;
   mealType?: string;

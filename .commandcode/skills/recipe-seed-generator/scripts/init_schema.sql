@@ -2,15 +2,14 @@ PRAGMA foreign_keys = ON;
 
 CREATE TABLE IF NOT EXISTS recipes (
   id INTEGER PRIMARY KEY,
-  title TEXT NOT NULL,
+  title TEXT NOT NULL UNIQUE,
   cuisine TEXT NOT NULL,
   meal_type TEXT NOT NULL,
   effort TEXT NOT NULL,
   estimated_time_minutes INTEGER NOT NULL,
   spice_level INTEGER NOT NULL,
   notes TEXT,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE(title, cuisine)
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS ingredients (
