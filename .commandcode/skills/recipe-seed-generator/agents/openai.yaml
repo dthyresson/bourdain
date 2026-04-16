@@ -1,0 +1,3 @@
+interface:
+  display_name: "Recipe Seed Generator"
+  short_description: "Generate and append normalized recipe seed data into SQLite"
